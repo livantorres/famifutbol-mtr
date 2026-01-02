@@ -1,80 +1,142 @@
 'use client';
 
-import { memo, useRef, useState, useEffect, useCallback } from 'react';
+import { memo, useRef, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+// Lazy load Framer Motion components pesados
+const AnimatePresence = lazy(() => import('framer-motion').then(mod => ({ default: mod.AnimatePresence })));
+
+// Optimizar imágenes pre-cargando dimensiones
 const SLIDE_IMAGES = [
-  '/images/sliders/1.webp',
-  '/images/sliders/1.webp',
-  '/images/sliders/1.webp',
-  '/images/sliders/1.webp',
+  { src: '/images/sliders/1.webp', width: 1920, height: 1080 },
+  { src: '/images/sliders/2.webp', width: 1920, height: 1080 },
+  { src: '/images/sliders/3.webp', width: 1920, height: 1080 },
+  { src: '/images/sliders/4.webp', width: 1920, height: 1080 },
 ];
+
+// Componente Loading para imágenes
+const ImageSkeleton = () => (
+  <div className="absolute inset-0 bg-gradient-to-br from-[#001a33] to-[#003366] animate-pulse" />
+);
 
 const Hero = memo(function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const targetRef = useRef(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const targetRef = useRef<HTMLDivElement>(null);
   
+  // Optimizar scroll listeners
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end start"]
   });
 
+  // Memoizar transformaciones
   const contentOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
   const contentScale = useTransform(scrollYProgress, [0, 0.4], [1, 0.9]);
 
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % SLIDE_IMAGES.length);
+    setCurrentIndex(prev => (prev + 1) % SLIDE_IMAGES.length);
   }, []);
 
   const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + SLIDE_IMAGES.length) % SLIDE_IMAGES.length);
+    setCurrentIndex(prev => (prev - 1 + SLIDE_IMAGES.length) % SLIDE_IMAGES.length);
   }, []);
 
+  // Optimizar intervalo
   useEffect(() => {
+    if (!isVisible) return;
+    
     const timer = setInterval(nextSlide, 8000);
     return () => clearInterval(timer);
-  }, [nextSlide]);
+  }, [nextSlide, isVisible]);
+
+  // Intersection Observer para lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    
+    if (targetRef.current) {
+      observer.observe(targetRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Pre-cargar imágenes
+  useEffect(() => {
+    const preloadImages = async () => {
+      const promises = SLIDE_IMAGES.map(img => {
+        return new Promise((resolve, reject) => {
+          const image = new window.Image();
+          image.src = img.src;
+          image.onload = resolve;
+          image.onerror = reject;
+        });
+      });
+      
+      await Promise.all(promises);
+      setImagesLoaded(true);
+    };
+    
+    preloadImages();
+  }, []);
 
   return (
     <section 
       ref={targetRef}
       className="relative min-h-screen lg:min-h-[110vh] flex items-center justify-center overflow-hidden bg-[#001a33] pt-24 pb-12 lg:pt-0 lg:pb-20"
     >
-      {/* 1. SLIDER DE FONDO - AJUSTADO PARA MÁS VISIBILIDAD */}
+      {/* 1. SLIDER DE FONDO OPTIMIZADO */}
       <div className="absolute inset-0 z-0">
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.7 }} // Subimos de 0.4 a 0.7 para que la imagen sea más clara
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0"
-          >
-            <Image
-              src={SLIDE_IMAGES[currentIndex]}
-              alt="Fondo Escuela de fútbol"
-              fill
-              priority={currentIndex === 0} // Solo la primera tiene prioridad
-              sizes="(max-width: 768px) 100vw, 50vw"
-              quality={75}
-              className="object-cover"
-            
-            />
-          </motion.div>
-        </AnimatePresence>
+        {!imagesLoaded ? (
+          <ImageSkeleton />
+        ) : (
+          <Suspense fallback={<ImageSkeleton />}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.7 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={SLIDE_IMAGES[currentIndex].src}
+                  alt={`Fondo escuela de fútbol ${currentIndex + 1}`}
+                  width={SLIDE_IMAGES[currentIndex].width}
+                  height={SLIDE_IMAGES[currentIndex].height}
+                  priority={currentIndex === 0}
+                  loading={currentIndex === 0 ? 'eager' : 'lazy'}
+                  quality={currentIndex === 0 ? 75 : 50}
+                  
+                  className="object-cover"
+                />
+              </motion.div>
+            </AnimatePresence>
+          </Suspense>
+        )}
         
-        {/* Capas de color ajustadas: Menos opacidad en el centro para ver la foto */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#003366]/70 via-[#003366]/30 to-[#003366] z-0" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:32px_32px] z-0" />
+        {/* Capas de color con opacity optimizada */}
+        <div 
+          className="absolute inset-0 bg-gradient-to-b from-[#003366]/70 via-[#003366]/30 to-[#003366]" 
+          aria-hidden="true"
+        />
+        <div 
+          className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:32px_32px]" 
+          aria-hidden="true"
+        />
       </div>
 
       {/* 2. CONTENIDO PRINCIPAL */}
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           
           {/* TEXTO IZQUIERDA */}
           <motion.div
@@ -89,26 +151,31 @@ const Hero = memo(function Hero() {
               Temporada 2026 abierta
             </motion.span>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight">
               Formando <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-yellow-200">
+              <span className="text-[#FFD700]">
                 Campeones
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-white mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed drop-shadow-md">
-              En <span className="text-[#FFD700] font-bold">FAMIFUTBOL</span> transformamos el talento en disciplina. La mejor escuela para niños de 4 a 18 años.
+            <p className="text-lg md:text-xl text-white mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              En <span className="text-[#FFD700] font-bold">FAMIFUTBOL</span> transformamos el talento en disciplina. 
+              La mejor escuela para niños de 4 a 18 años.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link href="/inscripcion" className="px-8 py-4 bg-[#FFD700] text-[#003366] rounded-2xl font-black text-lg shadow-xl hover:scale-105 transition-transform text-center">
+              <Link 
+                href="/inscripcion" 
+                className="px-8 py-4 bg-[#FFD700] text-[#003366] rounded-2xl font-black text-lg shadow-xl hover:scale-105 transition-transform text-center focus:outline-none focus:ring-4 focus:ring-[#FFD700]/50"
+                aria-label="Inscribirse ahora en FAMIFUTBOL"
+              >
                 ¡INSCRIBIRSE AHORA!
               </Link>
             </div>
           </motion.div>
 
-          {/* ÁREA DEL LOGO CON FONDO BLANCO INTENSO */}
-          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] w-full flex flex-col items-center justify-center">
+          {/* ÁREA DEL LOGO OPTIMIZADA */}
+          <div className="relative h-[300px] md:h-[400px] lg:h-[500px] w-full flex flex-col items-center justify-center">
             <motion.div 
               className="relative z-20 w-full h-full flex items-center justify-center"
               initial={{ opacity: 0, scale: 0.8 }}
@@ -116,39 +183,39 @@ const Hero = memo(function Hero() {
               transition={{ duration: 1 }}
             >
               <motion.div
-                animate={{ y: [-10, 10, -10] }}
-                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                className="relative w-72 h-72 md:w-96 md:h-96 lg:w-[480px] lg:h-[480px] flex items-center justify-center"
+                animate={{ y: [-5, 5, -5] }}
+                transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+                className="relative w-64 md:w-80 lg:w-96 flex items-center justify-center"
               >
-                {/* Círculo Blanco Sólido para que el logo negro no se pierda con la foto de fondo */}
-                <div className="absolute inset-10 bg-white rounded-full shadow-[0_0_80px_rgba(255,255,255,0.9)] z-0" />
+                {/* Círculo Blanco */}
+                <div className="absolute w-full aspect-square bg-white rounded-full shadow-[0_0_60px_rgba(255,255,255,0.8)]" />
                 
-                {/* Resplandor exterior para suavizar bordes */}
-                <div className="absolute inset-0 bg-white rounded-full blur-3xl opacity-40 scale-110" />
-
-                {/* LOGO */}
-                <div className="relative z-10 w-full h-full p-16">
+                {/* Logo optimizado */}
+                <div className="relative w-3/4 aspect-square">
                   <Image
-                    src="/images/logo.png"
-                    width={288} 
-                    height={287}
-                    alt="Logo Famifutbol"
-                    fill
+                    src="/images/logo.webp"
+                    alt="Logo de FAMIFUTBOL"
+                    width={256}
+                    height={256}
                     priority
-                    className="object-contain drop-shadow-xl"
+                    quality={85}
+                    className="object-contain"
                   />
                 </div>
               </motion.div>
             </motion.div>
             
-            {/* Dots indicadores */}
+            {/* Dots indicadores accesibles */}
             <div className="absolute bottom-4 flex gap-3 z-30">
               {SLIDE_IMAGES.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentIndex(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    currentIndex === i ? 'bg-[#FFD700] w-10' : 'bg-white/40 w-2'
+                  aria-label={`Ir a slide ${i + 1}`}
+                  className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+                    currentIndex === i 
+                      ? 'bg-[#FFD700] w-8' 
+                      : 'bg-white/40 w-2 hover:bg-white/60'
                   }`}
                 />
               ))}
@@ -157,32 +224,36 @@ const Hero = memo(function Hero() {
         </div>
       </div>
 
-      {/* 3. BOTONES DE NAVEGACIÓN */}
+      {/* 3. BOTONES DE NAVEGACIÓN ACCESIBLES */}
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-50 px-4 md:px-8 flex justify-between pointer-events-none">
-        <button aria-label="Anterior"
+        <button 
           onClick={prevSlide}
-          className="p-4 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all group shadow-2xl"
+          aria-label="Imagen anterior"
+          className="p-3 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all focus:outline-none focus:ring-2 focus:ring-white"
         >
-          <ChevronLeft className="w-8 h-8 group-active:scale-75" />
+          <ChevronLeft className="w-6 h-6" />
         </button>
-        <button aria-label="Siguiente"
+        <button 
           onClick={nextSlide}
-          className="p-4 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all group shadow-2xl"
+          aria-label="Imagen siguiente"
+          className="p-3 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all focus:outline-none focus:ring-2 focus:ring-white"
         >
-          <ChevronRight className="w-8 h-8 group-active:scale-75" />
+          <ChevronRight className="w-6 h-6" />
         </button>
       </div>
 
       {/* Indicador de scroll */}
       <motion.div 
-        animate={{ y: [0, 10, 0] }}
+        animate={{ y: [0, 8, 0] }}
         transition={{ repeat: Infinity, duration: 2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-6 h-10 border-2 border-white/30 rounded-full flex justify-center p-1 z-10"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 w-6 h-10 border-2 border-white/30 rounded-full flex justify-center p-1 z-10"
+        aria-hidden="true"
       >
-        <div className="w-1 h-2 bg-white rounded-full shadow-lg" />
+        <div className="w-1 h-3 bg-white rounded-full" />
       </motion.div>
     </section>
   );
 });
 
+// Prevenir re-renders innecesarios
 export default Hero;

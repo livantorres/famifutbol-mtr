@@ -6,21 +6,11 @@ import Features from '@/components/sections/Features';
 import CTA from '@/components/sections/CTA';
 import LoadingSpinner, { SkeletonLoader } from '@/components/ui/LoadingSpinner';
 
-// Componente de fallback mejorado
+// Componente de fallback para secciones que pueden cargarse lazy
 function PageFallback() {
   return (
     <div className="min-h-screen">
-      {/* Hero skeleton */}
-      <div className="h-screen bg-gradient-to-br from-primary/20 to-secondary/20">
-        <div className="container mx-auto px-4 py-20">
-          <SkeletonLoader type="text" count={3} />
-          <div className="mt-8">
-            <SkeletonLoader type="button" count={2} />
-          </div>
-        </div>
-      </div>
-      
-      {/* Services skeleton */}
+      {/* Solo mostramos skeleton para las secciones que están en Suspense */}
       <div className="py-20">
         <div className="container mx-auto px-4">
           <SkeletonLoader type="text" count={2} />
@@ -37,12 +27,17 @@ function PageFallback() {
 
 export default function Home() {
   return (
+    <main>
+      {/* Hero carga inmediatamente - SIN SUSPENSE */}
+      <Hero />
+      
+      {/* El resto de secciones pueden cargarse lazy */}
       <Suspense fallback={<PageFallback />}>
-        <Hero />
         <Services />
         <Gallery />
         <Features />
         <CTA />
       </Suspense>
+    </main>
   );
 }
