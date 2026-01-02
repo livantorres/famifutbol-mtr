@@ -178,7 +178,7 @@ const Hero = memo(function Hero() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link 
-                href="/inscripcion" 
+                href="#contacto" 
                 className="px-8 py-4 bg-[#FFD700] text-[#003366] rounded-2xl font-black text-lg shadow-xl hover:scale-105 transition-transform text-center focus:outline-none focus:ring-4 focus:ring-[#FFD700]/50"
                 aria-label="Inscribirse ahora en FAMIFUTBOL"
               >
