@@ -127,9 +127,9 @@ const Header = memo(function Header() {
             </AnimatePresence>
           </li>
 
-          <li><Link href="/galeria" className="hover:text-primary transition-colors">Galería</Link></li>
-          <li><Link href="/precios" className="hover:text-primary transition-colors">Precios</Link></li>
-          <li><Link href="/contacto" className="hover:text-primary transition-colors">Contacto</Link></li>
+          <li><Link href="#galeria" className="hover:text-primary transition-colors">Galería</Link></li>
+          <li><Link href="#precios" className="hover:text-primary transition-colors">Precios</Link></li>
+          <li><Link href="#contacto" className="hover:text-primary transition-colors">Contacto</Link></li>
         </ul>
 
         {/* ACCIONES */}
@@ -154,7 +154,7 @@ const Header = memo(function Header() {
           </DropdownMenu>
 
           <Link
-            href="/inscripcion"
+            href="#contacto"
             className={`px-6 py-2.5 rounded-full font-bold shadow-elegant transition-all active:scale-95 ${
               scrolled 
                 ? 'bg-primary text-primary-foreground' 

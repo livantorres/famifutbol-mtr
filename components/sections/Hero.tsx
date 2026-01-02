@@ -160,7 +160,7 @@ const Hero = memo(function Hero() {
 
             <p className="text-lg md:text-xl text-white mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
               En <span className="text-[#FFD700] font-bold">FAMIFUTBOL</span> transformamos el talento en disciplina. 
-              La mejor escuela para niños de 4 a 18 años.
+              La mejor escuela para niños de 4 a 16 años.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
