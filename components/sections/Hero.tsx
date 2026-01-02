@@ -58,8 +58,11 @@ const Hero = memo(function Hero() {
               src={SLIDE_IMAGES[currentIndex]}
               alt="Fondo Escuela de fútbol"
               fill
+              priority={currentIndex === 0} // Solo la primera tiene prioridad
+              sizes="(max-width: 768px) 100vw, 50vw"
+              quality={75}
               className="object-cover"
-              priority
+            
             />
           </motion.div>
         </AnimatePresence>
@@ -127,6 +130,8 @@ const Hero = memo(function Hero() {
                 <div className="relative z-10 w-full h-full p-16">
                   <Image
                     src="/images/logo.png"
+                    width={288} 
+                    height={287}
                     alt="Logo Famifutbol"
                     fill
                     priority
@@ -154,13 +159,13 @@ const Hero = memo(function Hero() {
 
       {/* 3. BOTONES DE NAVEGACIÓN */}
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-50 px-4 md:px-8 flex justify-between pointer-events-none">
-        <button
+        <button aria-label="Anterior"
           onClick={prevSlide}
           className="p-4 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all group shadow-2xl"
         >
           <ChevronLeft className="w-8 h-8 group-active:scale-75" />
         </button>
-        <button
+        <button aria-label="Siguiente"
           onClick={nextSlide}
           className="p-4 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all group shadow-2xl"
         >
