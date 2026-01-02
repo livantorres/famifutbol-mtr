@@ -162,6 +162,19 @@ const Hero = memo(function Hero() {
               En <span className="text-[#FFD700] font-bold">FAMIFUTBOL</span> transformamos el talento en disciplina. 
               La mejor escuela para niños de 4 a 16 años.
             </p>
+               {/* Stats en Glassmorphism */}
+            <div className="grid grid-cols-3 gap-4 mb-10 max-w-lg mx-auto lg:mx-0">
+              {[
+                { n: '100+', l: 'Alumnos' },
+                { n: '5+', l: 'Años Experiencia' },
+                { n: '10+', l: 'Categorias' }
+              ].map((s, i) => (
+                <div key={i} className="glass p-4 rounded-2xl text-center border-white/10">
+                  <div className="text-2xl md:text-3xl font-black text-white">{s.n}</div>
+                  <div className="text-[10px] uppercase text-blue-200 font-bold tracking-tighter">{s.l}</div>
+                </div>
+              ))}
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link 
