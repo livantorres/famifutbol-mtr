@@ -2,6 +2,7 @@
 
 import { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Menu,
   X,
@@ -51,23 +52,33 @@ const Header = memo(function Header() {
       <nav className="container mx-auto px-4 h-16 lg:h-20 flex items-center justify-between">
         
         {/* LOGO */}
-        <Link href="/" className="flex items-center space-x-3 group">
-          <motion.div 
-            className="w-11 h-11 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-primary/20 transition-shadow"
-            whileHover={{ scale: 1.05, rotate: 5 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Target className="w-6 h-6 text-white" />
-          </motion.div>
-          <div>
-            <h1 className={`text-xl lg:text-2xl font-bold transition-colors duration-300 ${textColor}`}>
-              FAMI<span className={scrolled ? 'text-primary' : 'text-[#FFD700]'}>FUTBOL</span>
-            </h1>
-            <p className={`text-[10px] uppercase tracking-widest font-bold transition-colors duration-300 ${textColorMuted}`}>
-              Formando Campeones
-            </p>
-          </div>
-        </Link>
+<Link href="/" className="flex items-center space-x-3 group">
+  <motion.div 
+    className="relative w-11 h-11 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-primary/20 transition-shadow overflow-hidden"
+    whileHover={{ scale: 1.05, rotate: 5 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    {/* Versión mini del logo */}
+    <div className="bg-white rounded-xl relative w-8 h-8">
+      <Image
+        src="/images/logo.webp" // Crea una versión mini de 32x32px
+        alt="Logo de FAMIFUTBOL"
+        width={32}
+        height={32}
+        priority
+        className="object-contain"
+      />
+    </div>
+  </motion.div>
+  <div>
+    <h1 className={`text-xl lg:text-2xl font-bold transition-colors duration-300 ${textColor}`}>
+      FAMI<span className={scrolled ? 'text-primary' : 'text-[#FFD700]'}>FUTBOL</span>
+    </h1>
+    <p className={`text-[10px] uppercase tracking-widest font-bold transition-colors duration-300 ${textColorMuted}`}>
+      Formando Campeones
+    </p>
+  </div>
+</Link>
 
         {/* MENU DESKTOP */}
         <ul className={`hidden lg:flex items-center gap-8 font-medium transition-colors duration-300 ${textColor}`}>

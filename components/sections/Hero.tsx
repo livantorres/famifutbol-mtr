@@ -191,7 +191,7 @@ const Hero = memo(function Hero() {
                 <div className="absolute w-full aspect-square bg-white rounded-full shadow-[0_0_60px_rgba(255,255,255,0.8)]" />
                 
                 {/* Logo optimizado */}
-                <div className="relative w-3/4 aspect-square">
+                <div className="relative w-3/4.5 aspect-square">
                   <Image
                     src="/images/logo.webp"
                     alt="Logo de FAMIFUTBOL"
