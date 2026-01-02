@@ -1,41 +1,79 @@
 'use client';
 
-import { memo, useRef } from 'react';
+import { memo, useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Importamos el componente Image
-import { motion, useScroll, useTransform } from 'framer-motion';
+import Image from 'next/image';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const SLIDE_IMAGES = [
+  '/images/sliders/1.webp',
+  '/images/sliders/1.webp',
+  '/images/sliders/1.webp',
+  '/images/sliders/1.webp',
+];
 
 const Hero = memo(function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const targetRef = useRef(null);
+  
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end start"]
   });
 
-  // Animaciones ligadas al scroll para el texto
   const contentOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
   const contentScale = useTransform(scrollYProgress, [0, 0.4], [1, 0.9]);
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % SLIDE_IMAGES.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + SLIDE_IMAGES.length) % SLIDE_IMAGES.length);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 8000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
 
   return (
     <section 
       ref={targetRef}
-      // Añadimos pt-24 (en móvil) y lg:pt-0 (en escritorio para que el flex center haga su trabajo)
-      className="relative min-h-screen lg:min-h-[110vh] flex items-center justify-center overflow-hidden bg-[#003366] pt-24 pb-12 lg:pt-0 lg:pb-20"
+      className="relative min-h-screen lg:min-h-[110vh] flex items-center justify-center overflow-hidden bg-[#001a33] pt-24 pb-12 lg:pt-0 lg:pb-20"
     >
-      {/* Fondo con Branding Dinámico */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Círculos de luz suaves (Glow) */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-primary/30 rounded-full blur-[100px]" />
+      {/* 1. SLIDER DE FONDO - AJUSTADO PARA MÁS VISIBILIDAD */}
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.7 }} // Subimos de 0.4 a 0.7 para que la imagen sea más clara
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2 }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={SLIDE_IMAGES[currentIndex]}
+              alt="Fondo Escuela de fútbol"
+              fill
+              className="object-cover"
+              priority
+            />
+          </motion.div>
+        </AnimatePresence>
         
-        {/* Grid Pattern sutil */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px]" />
+        {/* Capas de color ajustadas: Menos opacidad en el centro para ver la foto */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#003366]/70 via-[#003366]/30 to-[#003366] z-0" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:32px_32px] z-0" />
       </div>
 
+      {/* 2. CONTENIDO PRINCIPAL */}
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           
-          {/* BLOQUE IZQUIERDO: TEXTO (Sin cambios) */}
+          {/* TEXTO IZQUIERDA */}
           <motion.div
             style={{ opacity: contentOpacity, scale: contentScale }}
             className="text-center lg:text-left"
@@ -43,92 +81,100 @@ const Hero = memo(function Hero() {
             <motion.span 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-block px-4 py-1.5 mb-6 rounded-full bg-white/10 border border-white/20 text-blue-200 text-sm font-bold uppercase tracking-widest"
+              className="inline-block px-4 py-1.5 mb-6 rounded-full bg-white/20 border border-white/30 text-white text-sm font-bold uppercase tracking-widest backdrop-blur-sm"
             >
               Temporada 2026 abierta
             </motion.span>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight drop-shadow-lg">
               Formando <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-yellow-200 drop-shadow-sm">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-yellow-200">
                 Campeones
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-blue-100/80 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              En <span className="text-white font-bold">FAMIFUTBOL</span> transformamos el talento en disciplina. La mejor escuela para niños de 4 a 18 años.
+            <p className="text-lg md:text-xl text-white mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed drop-shadow-md">
+              En <span className="text-[#FFD700] font-bold">FAMIFUTBOL</span> transformamos el talento en disciplina. La mejor escuela para niños de 4 a 18 años.
             </p>
-
-            {/* Stats en Glassmorphism */}
-            <div className="grid grid-cols-3 gap-4 mb-10 max-w-lg mx-auto lg:mx-0">
-              {[
-                { n: '500+', l: 'Alumnos' },
-                { n: '5+', l: 'Años Experiencia' },
-                { n: '10+', l: 'Categorias' }
-              ].map((s, i) => (
-                <div key={i} className="glass p-4 rounded-2xl text-center border-white/10">
-                  <div className="text-2xl md:text-3xl font-black text-white">{s.n}</div>
-                  <div className="text-[10px] uppercase text-blue-200 font-bold tracking-tighter">{s.l}</div>
-                </div>
-              ))}
-            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link href="/inscripcion" className="px-8 py-4 bg-[#FFD700] text-[#003366] rounded-2xl font-black text-lg shadow-xl hover:scale-105 transition-transform text-center">
                 ¡INSCRIBIRSE AHORA!
               </Link>
-              <Link href="/sedes" className="px-8 py-4 bg-white/5 backdrop-blur-md text-white border border-white/20 rounded-2xl font-bold text-lg hover:bg-white/10 transition-all text-center">
-                Ver Sedes
-              </Link>
             </div>
           </motion.div>
 
-          {/* BLOQUE DERECHO: IMAGEN ANIMADA */}
-          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] w-full flex items-center justify-center perspective-1000">
-            
-            {/* Wrapper para la animación de entrada */}
+          {/* ÁREA DEL LOGO CON FONDO BLANCO INTENSO */}
+          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] w-full flex flex-col items-center justify-center">
             <motion.div 
-              className="relative z-20 w-full h-full"
-              initial={{ opacity: 0, y: 50, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+              className="relative z-20 w-full h-full flex items-center justify-center"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1 }}
             >
-              {/* Wrapper interno para la animación de flotación continua */}
               <motion.div
-                animate={{ y: [-15, 15, -15] }}
-                transition={{ 
-                  repeat: Infinity, 
-                  duration: 6, 
-                  ease: "easeInOut" 
-                }}
-                className="relative w-full h-full"
+                animate={{ y: [-10, 10, -10] }}
+                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                className="relative w-72 h-72 md:w-96 md:h-96 lg:w-[480px] lg:h-[480px] flex items-center justify-center"
               >
-                 {/* Componente de Imagen Optimizado */}
-                 {/* Usamos 'fill' y 'object-contain' para que se adapte al contenedor sin deformarse */}
-                 <Image
-                    src="/images/hero.png"
-                    alt="Jugador de Famifutbol en acción"
+                {/* Círculo Blanco Sólido para que el logo negro no se pierda con la foto de fondo */}
+                <div className="absolute inset-10 bg-white rounded-full shadow-[0_0_80px_rgba(255,255,255,0.9)] z-0" />
+                
+                {/* Resplandor exterior para suavizar bordes */}
+                <div className="absolute inset-0 bg-white rounded-full blur-3xl opacity-40 scale-110" />
+
+                {/* LOGO */}
+                <div className="relative z-10 w-full h-full p-16">
+                  <Image
+                    src="/images/logo.png"
+                    alt="Logo Famifutbol"
                     fill
-                    priority // Carga prioritaria para el LCP (Largest Contentful Paint)
-                    className="object-contain drop-shadow-[0_35px_35px_rgba(0,0,0,0.4)]"
+                    priority
+                    className="object-contain drop-shadow-xl"
                   />
+                </div>
               </motion.div>
             </motion.div>
-
-            {/* Luz de fondo detrás de la imagen para darle profundidad */}
-            <div className="absolute z-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-white/10 blur-[100px] rounded-full" />
+            
+            {/* Dots indicadores */}
+            <div className="absolute bottom-4 flex gap-3 z-30">
+              {SLIDE_IMAGES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentIndex(i)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    currentIndex === i ? 'bg-[#FFD700] w-10' : 'bg-white/40 w-2'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
-
         </div>
       </div>
 
-      {/* Indicador de Scroll (Sin cambios) */}
+      {/* 3. BOTONES DE NAVEGACIÓN */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-50 px-4 md:px-8 flex justify-between pointer-events-none">
+        <button
+          onClick={prevSlide}
+          className="p-4 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all group shadow-2xl"
+        >
+          <ChevronLeft className="w-8 h-8 group-active:scale-75" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="p-4 rounded-full bg-white/20 border border-white/30 text-white backdrop-blur-md pointer-events-auto hover:bg-[#FFD700] hover:text-[#003366] transition-all group shadow-2xl"
+        >
+          <ChevronRight className="w-8 h-8 group-active:scale-75" />
+        </button>
+      </div>
+
+      {/* Indicador de scroll */}
       <motion.div 
         animate={{ y: [0, 10, 0] }}
         transition={{ repeat: Infinity, duration: 2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-6 h-10 border-2 border-white/20 rounded-full flex justify-center p-1"
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-6 h-10 border-2 border-white/30 rounded-full flex justify-center p-1 z-10"
       >
-        <div className="w-1 h-2 bg-white rounded-full" />
+        <div className="w-1 h-2 bg-white rounded-full shadow-lg" />
       </motion.div>
     </section>
   );
